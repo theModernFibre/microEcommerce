@@ -1,0 +1,21 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: product-service
+  datasource:
+    url: jdbc:h2:mem:productdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${DISCOVERY_HOSTPORT:localhost:8761}/eureka/
+  instance:
+    prefer-ip-address: true

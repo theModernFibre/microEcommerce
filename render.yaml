@@ -1,0 +1,99 @@
+# MicroShop - Render Blueprint (deploy all 7 services from one repo)
+# Docs: https://render.com/docs/blueprint-spec
+# Deploy: connect this repo in Render Dashboard and use "Blueprint" or apply this file.
+
+services:
+  # 1. Discovery (Eureka) - must start first; others depend on it via DISCOVERY_HOSTPORT
+  - type: web
+    runtime: java
+    name: discovery-server
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl discovery-server -am
+    startCommand: java -jar discovery-server/target/discovery-server-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: PORT
+        value: 8761
+
+  # 2. API Gateway
+  - type: web
+    runtime: java
+    name: api-gateway
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl api-gateway -am
+    startCommand: java -jar api-gateway/target/api-gateway-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: DISCOVERY_HOSTPORT
+        fromService:
+          name: discovery-server
+          type: web
+          property: hostport
+
+  # 3. Auth Service
+  - type: web
+    runtime: java
+    name: auth-service
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl auth-service -am
+    startCommand: java -jar auth-service/target/auth-service-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: DISCOVERY_HOSTPORT
+        fromService:
+          name: discovery-server
+          type: web
+          property: hostport
+
+  # 4. Product Service
+  - type: web
+    runtime: java
+    name: product-service
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl product-service -am
+    startCommand: java -jar product-service/target/product-service-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: DISCOVERY_HOSTPORT
+        fromService:
+          name: discovery-server
+          type: web
+          property: hostport
+
+  # 5. Order Service
+  - type: web
+    runtime: java
+    name: order-service
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl order-service -am
+    startCommand: java -jar order-service/target/order-service-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: DISCOVERY_HOSTPORT
+        fromService:
+          name: discovery-server
+          type: web
+          property: hostport
+
+  # 6. Inventory Service
+  - type: web
+    runtime: java
+    name: inventory-service
+    rootDir: .
+    buildCommand: mvn clean package -DskipTests -pl inventory-service -am
+    startCommand: java -jar inventory-service/target/inventory-service-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: DISCOVERY_HOSTPORT
+        fromService:
+          name: discovery-server
+          type: web
+          property: hostport
+
+  # 7. Frontend (Docker) - proxies /api to api-gateway over Render private network
+  - type: web
+    runtime: docker
+    name: frontend
+    rootDir: frontend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: API_GATEWAY_HOSTPORT
+        fromService:
+          name: api-gateway
+          type: web
+          property: hostport
